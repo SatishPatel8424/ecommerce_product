@@ -2,12 +2,7 @@ import json
 from django.shortcuts import render, redirect, reverse
 from django.http import JsonResponse
 import sweetify
-
-# The contents of this file are closely based on the course content taught in
-# the CodeInstitute Full Stack Web Development course.
-# The teachings have been modified for the project owner's development style
-# and to best suit the PrintCrate project.
-
+from django.views import generic
 
 def empty_cart_modal(request):
     """Modal shown when cart page accessed with empty cart."""
@@ -22,32 +17,32 @@ def empty_cart_modal(request):
     return request
 
 
-def cart_view(request):
-    """Handles request for displaying the contents of the cart.
+class cart_view(generic.ListView,generic.FormView):
+    template_name = 'cart.html'
+    context_object_name = 'cart_items'
 
-    User is returned to their original page if attempting to access an empty
-    cart, with a modal message to alert that the cart is empty with prompt
-    to add products.
-    If user has emptied their cart they are navigated to the products page,
-     with the modal triggered.
-    """
-    if not request.session.get("cart"):
-        empty_cart_modal(request)
-        return redirect(reverse("products"))
-    if request.method == "POST":
-        if request.headers["Identifying-Header"] == "quantityValidationFetch":
-            custom_fetch_request = json.loads(request.body)
-            response = validate_item_quantity_change(
-                request, custom_fetch_request)
-            return JsonResponse(response)
-        if request.headers["Identifying-Header"] == "removeCartItemFetch":
-            custom_fetch_request = json.loads(request.body)
-            cart = request.session["cart"]
-            target_product = custom_fetch_request["itemId"]
-            del cart[target_product]
-            request.session["cart"] = cart
-    return render(request, "cart.html", {"page_title": "Cart | PrintCrate"})
+    def get(self, request, *args, **kwargs):
+        if not request.session.get("cart"):
+            empty_cart_modal(request)
+            return redirect(reverse("products"))
+        return render(self.request, self.template_name)
 
+
+    def post(self, request, *args, **kwargs):
+        if request.method == "POST":
+            if request.headers["Identifying-Header"] == "quantityValidationFetch":
+                custom_fetch_request = json.loads(request.body)
+                response = validate_item_quantity_change(
+                    request, custom_fetch_request)
+                return JsonResponse(response)
+            if request.headers["Identifying-Header"] == "removeCartItemFetch":
+                custom_fetch_request = json.loads(request.body)
+                cart = request.session["cart"]
+                target_product = custom_fetch_request["itemId"]
+                del cart[target_product]
+                request.session["cart"] = cart
+            return JsonResponse({"success": True}, status=200)
+        return JsonResponse({"success": False, }, status=400)
 
 def add_to_cart(request, id):
     """Adds the required quantity of a product to session variable."""
@@ -60,7 +55,6 @@ def add_to_cart(request, id):
 
     request.session["cart"] = cart
     return redirect(reverse("cart_view"))
-
 
 def adjust_cart(request, id):
     """Alters existing product quantity, removes if quantity less than 1."""
