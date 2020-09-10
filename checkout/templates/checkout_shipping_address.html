@@ -12,7 +12,7 @@
         {% csrf_token %}
         <fieldset class="form-group pt-3 pb-1">
           <!-- Form for customer to specify shipping information for specific order. -->
-          {{ customer_shipping_form|crispy }}
+          {{ form|crispy }}
         </fieldset>
         <div class="form-group d-flex justify-content-center">
           <button class="btn btn-custom" type="submit">Confirm</button>
