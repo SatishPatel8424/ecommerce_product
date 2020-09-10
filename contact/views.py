@@ -1,52 +1,37 @@
 import os
 from django.core.mail import send_mail, BadHeaderError
-from django.http import HttpResponse
+from django.http import HttpResponse, JsonResponse
 from django.shortcuts import render, redirect
+from django.views import generic
+
 from .forms import ContactForm
 
 
-def contact_us(request):
-    """Constructs email from form, sending details via SMTP.
+class contact_us(generic.FormView):
+    form_class = ContactForm
+    template_name = "contact.html"
 
-    If the user is logged in, the email address field is pre-populated.
-    Invalid field submission results in user feedback through form validation.
-    As content is sent through Gmail SMTP the sender's email address is also included
-    in the message body, as the "from" field is overwritten by Gmail account owner's credentials.
-    Core code adapted from: https://learndjango.com/tutorials/django-email-contact-form
-    Insertion of existing user email adapted from https://stackoverflow.com/a/28374362/
-    """
-    if request.method == "GET":
-        contact_form = ContactForm()
-        current_user = request.user
+    def get(self, *args, **kwargs):
+        form = self.form_class()
+        current_user = self.request.user
         if str(current_user) != "AnonymousUser":
-            contact_form.fields["email"].widget.attrs.update({
+            form.fields["email"].widget.attrs.update({
                 "value": current_user.email
             })
-    else:
-        contact_form = ContactForm(request.POST)
-        if contact_form.is_valid():
-            subject = contact_form.cleaned_data["subject"]
-            customer_email_address = contact_form.cleaned_data["email"]
+        return render(self.request, self.template_name, {"form": form})
+
+    def post(self, request, *args, **kwargs):
+        form = self.form_class(self.request.POST)
+        if form.is_valid():
+            subject = form.cleaned_data["subject"]
+            customer_email_address = form.cleaned_data["email"]
             contact_message = customer_email_address + " - " + \
-                contact_form.cleaned_data["contact_message"]
+                              form.cleaned_data["contact_message"]
             try:
                 send_mail(subject, contact_message, customer_email_address, [
                     os.environ.get("EMAIL_RECIPIENT")], True)
             except BadHeaderError:
                 # Prevents header injection.
                 return HttpResponse("Invalid header found.")
-        return redirect("contact_success")
-    return render(
-        request,
-        "contact.html",
-        {"page_title": "Contact Us | PrintCrate", "contact_form": contact_form},
-    )
-
-
-def contact_success(request):
-    """Page rendered upon successful contact form submission."""
-    return render(
-        request,
-        "contact_success.html",
-        {"page_title": "Contact Success | PrintCrate"}
-    )
+            return JsonResponse({"success": True}, status=200)
+        return JsonResponse({"success": False, "errors": form.errors}, status=400)
