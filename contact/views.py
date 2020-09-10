@@ -10,6 +10,7 @@ from .forms import ContactForm
 class contact_us(generic.FormView):
     form_class = ContactForm
     template_name = "contact.html"
+    success_url = 'success/'
 
     def get(self, *args, **kwargs):
         form = self.form_class()
@@ -35,3 +36,5 @@ class contact_us(generic.FormView):
                 return HttpResponse("Invalid header found.")
             return JsonResponse({"success": True}, status=200)
         return JsonResponse({"success": False, "errors": form.errors}, status=400)
+
+
