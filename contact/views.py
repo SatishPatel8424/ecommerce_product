@@ -12,29 +12,32 @@ class contact_us(generic.FormView):
     template_name = "contact.html"
     success_url = 'success/'
 
-    def get(self, *args, **kwargs):
+
+    def get_initial(self):
         form = self.form_class()
-        current_user = self.request.user
-        if str(current_user) != "AnonymousUser":
-            form.fields["email"].widget.attrs.update({
-                "value": current_user.email
-            })
-        return render(self.request, self.template_name, {"form": form})
+        if self.request.GET:
+            initial = self.request.GET.dict()
+            current_user = self.request.user
+            if str(current_user) != "AnonymousUser":
+                form.fields["email"].widget.attrs.update({
+                    "value": current_user.email
+                })
+            return initial
+        else:
+            return super(contact_us, self).get_initial()
 
-    def post(self, request, *args, **kwargs):
-        form = self.form_class(self.request.POST)
-        if form.is_valid():
-            subject = form.cleaned_data["subject"]
-            customer_email_address = form.cleaned_data["email"]
-            contact_message = customer_email_address + " - " + \
-                              form.cleaned_data["contact_message"]
-            try:
-                send_mail(subject, contact_message, customer_email_address, [
-                    os.environ.get("EMAIL_RECIPIENT")], True)
-            except BadHeaderError:
-                # Prevents header injection.
-                return HttpResponse("Invalid header found.")
-            return JsonResponse({"success": True}, status=200)
-        return JsonResponse({"success": False, "errors": form.errors}, status=400)
+    def form_valid(self, form):
+        subject = form.cleaned_data["subject"]
+        customer_email_address = form.cleaned_data["email"]
+        contact_message = customer_email_address + " - " + \
+                          form.cleaned_data["contact_message"]
+        try:
+            send_mail(subject, contact_message, customer_email_address, [
+                os.environ.get("EMAIL_RECIPIENT")], True)
+        except BadHeaderError:
+            # Prevents header injection.
+            return HttpResponse("Invalid header found.")
+        return super().form_valid(subject)
 
-
+class contact_success(generic.TemplateView):
+    template_name = 'contact_success.html'
