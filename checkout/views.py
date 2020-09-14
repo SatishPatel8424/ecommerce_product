@@ -1,4 +1,4 @@
-from django.http import JsonResponse
+from django.http import JsonResponse, HttpResponseRedirect
 from django.shortcuts import render, redirect, reverse, get_object_or_404
 from django.conf import settings
 from django.contrib.auth.decorators import login_required
@@ -19,54 +19,57 @@ decorators = [login_required]
 class checkout_shipping_address_view(generic.FormView):
     form_class = CustomerShippingForm
     template_name = 'checkout_shipping_address.html'
-    def post(self, request, *args, **kwargs):
-        if not request.session.get("cart"):
-            empty_cart_modal(request)
-            return redirect("products")
-        if request.method == "POST":
-            # customer_shipping = CustomerShippingForm(request.POST)
-            form = self.form_class(self.request.POST)
-            if form.is_valid():
-                shipping = form.save(commit=False)
-                shipping.customer = self.request.user
-                shipping.save()
-                return redirect("payment")
 
-        else:
-            # form = CustomerShippingForm()
-            form = self.form_class()
-            return JsonResponse({"success": True}, status=200)
-        return JsonResponse({"success": False, "errors": form.errors}, status=400)
+    def get_initial(self):
+        if not self.request.session.get("cart"):
+            empty_cart_modal(self.request)
+            return redirect("products")
+        return self.initial.copy()
+
+    def form_valid(self, form):
+        form = self.form_class(self.request.POST)
+        shipping = form.save(commit=False)
+        shipping.customer = self.request.user
+        shipping.save()
+        return redirect("payment")
+        return HttpResponseRedirect(self.get_success_url())
+
+    def form_invalid(self, form):
+        form = self.form_class()
+        return self.render_to_response(self.get_context_data(form=form))
+
+
 
 @method_decorator(login_required, name='dispatch')
 class checkout_payment(generic.FormView):
     form_class = PaymentForm
     template_name = 'checkout_payment.html'
 
-    def post(self, request, *args, **kwargs):
-        if request.method == "POST":
+
+    def form_valid(self, form):
+        if self.request.method == "POST":
             # payment_form = PaymentForm(request.POST)
             form = self.form_class(self.request.POST)
             if form.is_valid():
-                cart = request.session.get("cart", {})
-                cart_total = cart_contents(request)["total"]
+                cart = self.request.session.get("cart", {})
+                cart_total = cart_contents(self.request)["total"]
                 try:
                     stripe.Charge.create(
                         amount=int(cart_total * 100),
                         currency="GBP",
-                        description=request.user.email,
+                        description=self.request.user.email,
                         card=form.cleaned_data["stripe_id"]
                     )
                 except stripe.error.CardError:
                     sweetify.error(
-                        request,
+                        self.request,
                         title="Payment error occurred, please retry with valid credentials.",
                         text="If error persists, contact site owner.",
                         icon="error"
                     )
                 except stripe.error.InvalidRequestError:
                     sweetify.error(
-                        request,
+                        self.request,
                         title="A payment error has occurred.",
                         text="An item may have gone out of stock during checkout.",
                         icon="error"
@@ -74,7 +77,7 @@ class checkout_payment(generic.FormView):
                     return redirect("profile")
                 except stripe.error.APIConnectionError:
                     sweetify.error(
-                        request,
+                        self.request,
                         title="A payment error has occurred.",
                         text="Connection to payment handler has failed, please retry later.",
                         icon="error"
@@ -82,75 +85,19 @@ class checkout_payment(generic.FormView):
                     return redirect("profile")
                 else:
                     sweetify.success(
-                        request,
+                        self.request,
                         title="Payment successful, thank you for your purchase.",
                         icon="success"
                     )
-                    create_order_product_records(request, cart)
-                    del request.session["cart"]
+                    create_order_product_records(self.request, cart)
+                    del self.request.session["cart"]
                     return redirect(reverse("profile"))
-            else:
-                # payment_form = PaymentForm()
-                form = self.form_class()
                 return JsonResponse({"success": True}, status=200)
-            return JsonResponse({"success": False, "errors": form.errors}, status=400)
 
 
-# @login_required
-# def checkout_payment(request):
-#     if request.method == "POST":
-#         payment_form = PaymentForm(request.POST)
-#         if payment_form.is_valid():
-#             cart = request.session.get("cart", {})
-#             cart_total = cart_contents(request)["total"]
-#             try:
-#                 stripe.Charge.create(
-#                     amount=int(cart_total*100),
-#                     currency="GBP",
-#                     description=request.user.email,
-#                     card=payment_form.cleaned_data["stripe_id"]
-#                 )
-#             except stripe.error.CardError:
-#                 sweetify.error(
-#                     request,
-#                     title="Payment error occurred, please retry with valid credentials.",
-#                     text="If error persists, contact site owner.",
-#                     icon="error"
-#                 )
-#             except stripe.error.InvalidRequestError:
-#                 sweetify.error(
-#                     request,
-#                     title="A payment error has occurred.",
-#                     text="An item may have gone out of stock during checkout.",
-#                     icon="error"
-#                 )
-#                 return redirect("profile")
-#             except stripe.error.APIConnectionError:
-#                 sweetify.error(
-#                     request,
-#                     title="A payment error has occurred.",
-#                     text="Connection to payment handler has failed, please retry later.",
-#                     icon="error"
-#                 )
-#                 return redirect("profile")
-#             else:
-#                 sweetify.success(
-#                     request,
-#                     title="Payment successful, thank you for your purchase.",
-#                     icon="success"
-#                 )
-#                 create_order_product_records(request, cart)
-#                 del request.session["cart"]
-#                 return redirect(reverse("profile"))
-#     else:
-#         payment_form = PaymentForm()
-#     return render(
-#         request, "checkout_payment.html",
-#         {"page_title": "Payment | PrintCrate",
-#          "payment_form": payment_form,
-#          "publishable": settings.STRIPE_PUBLISHABLE}
-#     )
-
+    def form_invalid(self, form):
+        form = self.form_class()
+        return JsonResponse({"success": False, "errors": form.errors}, status=400)
 
 def create_order_product_records(request, cart):
     """Creates the product order record in the database.
