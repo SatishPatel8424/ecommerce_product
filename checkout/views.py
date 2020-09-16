@@ -1,3 +1,4 @@
+from django.contrib.auth.mixins import LoginRequiredMixin
 from django.http import JsonResponse, HttpResponseRedirect
 from django.shortcuts import render, redirect, reverse, get_object_or_404
 from django.conf import settings
@@ -13,10 +14,10 @@ from .models import CustomerShipping, OrderDetail
 import stripe
 
 stripe.api_key = settings.STRIPE_SECRET
-decorators = [login_required]
+# decorators = [login_required]
 
-@method_decorator(login_required, name='dispatch')
-class checkout_shipping_address_view(generic.FormView):
+# @method_decorator(login_required, name='dispatch')
+class checkout_shipping_address_view(LoginRequiredMixin,generic.FormView):
     form_class = CustomerShippingForm
     template_name = 'checkout_shipping_address.html'
 
@@ -40,8 +41,8 @@ class checkout_shipping_address_view(generic.FormView):
 
 
 
-@method_decorator(login_required, name='dispatch')
-class checkout_payment(generic.FormView):
+# @method_decorator(login_required, name='dispatch')
+class checkout_payment(LoginRequiredMixin,generic.FormView):
     form_class = PaymentForm
     template_name = 'checkout_payment.html'
 

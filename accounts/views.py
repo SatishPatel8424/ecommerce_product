@@ -1,3 +1,4 @@
+from django.contrib.auth.mixins import LoginRequiredMixin
 from django.http import HttpResponseRedirect, JsonResponse
 from django.shortcuts import render, redirect, reverse
 from django.contrib import auth
@@ -11,7 +12,7 @@ from django.views import generic
 from checkout.models import OrderDetail
 from .forms import UserRegisterForm, UserCredentialsUpdateForm
 
-decorators = [login_required]
+# decorators = [login_required]
 
 @login_required
 def logout(request):
@@ -76,8 +77,8 @@ class registration(generic.FormView):
         return HttpResponseRedirect(self.get_success_url())
 
 
-@method_decorator(login_required, name='dispatch')
-class profile(generic.FormView):
+# @method_decorator(login_required, name='dispatch')
+class profile(LoginRequiredMixin,generic.FormView):
     form_class = UserCredentialsUpdateForm
     template_name = 'profile.html'
 
