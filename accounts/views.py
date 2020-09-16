@@ -111,17 +111,18 @@ class profile(LoginRequiredMixin,generic.FormView):
         user = User.objects.get(username=self.request.user)
         user_orders = OrderDetail.objects.filter(
             shipping__customer_id=user.id).order_by("-purchase_date")
-        if self.request.method == "POST":
-            form = UserCredentialsUpdateForm(self.request.POST, instance=user)
-            new_credentials = form.save(commit=False)
-            hashed_password = make_password(form.cleaned_data["password"])
-            new_credentials.password = hashed_password
-            new_credentials.save()
-            sweetify.success(
-                self.request,
-                "Your credentials have been updated, please login."
-            )
-            return redirect("login")
-
+        form = UserCredentialsUpdateForm(self.request.POST, instance=user)
+        new_credentials = form.save(commit=False)
+        hashed_password = make_password(form.cleaned_data["password"])
+        new_credentials.password = hashed_password
+        new_credentials.save()
+        sweetify.success(
+            self.request,
+            "Your credentials have been updated, please login."
+        )
+        return redirect("login")
         return HttpResponseRedirect(self.get_success_url())
+
+
+
 

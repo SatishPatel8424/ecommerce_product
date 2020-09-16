@@ -29,20 +29,22 @@ class cart_view(generic.TemplateView):
         return render(self.request, self.template_name)
 
     def post(self, request, *args, **kwargs):
-        if request.method == "POST":
-            if request.headers["Identifying-Header"] == "quantityValidationFetch":
-                custom_fetch_request = json.loads(request.body)
-                response = validate_item_quantity_change(
-                    request, custom_fetch_request)
-                return JsonResponse(response)
-            if request.headers["Identifying-Header"] == "removeCartItemFetch":
-                custom_fetch_request = json.loads(request.body)
-                cart = request.session["cart"]
-                target_product = custom_fetch_request["itemId"]
-                del cart[target_product]
-                request.session["cart"] = cart
+        if request.headers["Identifying-Header"] == "quantityValidationFetch":
+            custom_fetch_request = json.loads(request.body)
+            response = validate_item_quantity_change(
+                request, custom_fetch_request)
+            return JsonResponse(response)
+        if request.headers["Identifying-Header"] == "removeCartItemFetch":
+            custom_fetch_request = json.loads(request.body)
+            cart = request.session["cart"]
+            target_product = custom_fetch_request["itemId"]
+            del cart[target_product]
+            request.session["cart"] = cart
             return JsonResponse({"success": True}, status=200)
         return JsonResponse({"success": False, }, status=400)
+
+
+
 
 
 
