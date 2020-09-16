@@ -3,7 +3,6 @@ from django.core.mail import send_mail, BadHeaderError
 from django.http import HttpResponse, JsonResponse
 from django.shortcuts import render, redirect
 from django.views import generic
-
 from .forms import ContactForm
 
 

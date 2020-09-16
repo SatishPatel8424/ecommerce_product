@@ -124,33 +124,3 @@ class profile(generic.FormView):
 
         return HttpResponseRedirect(self.get_success_url())
 
-    # def post(self, request, *args, **kwargs):
-    #     previous_page = request.META.get("HTTP_REFERER")
-    #     if previous_page:
-    #         if previous_page.endswith("login"):
-    #             sweetify.success(
-    #                 request,
-    #                 title="Login successful.",
-    #                 icon="success",
-    #             )
-    #     user = User.objects.get(username=request.user)
-    #     user_orders = OrderDetail.objects.filter(
-    #         shipping__customer_id=user.id).order_by("-purchase_date")
-    #     if request.method == "POST":
-    #         form = UserCredentialsUpdateForm(request.POST, instance=user)
-    #         if form.is_valid():
-    #             new_credentials = form.save(commit=False)
-    #             hashed_password = make_password(form.cleaned_data["password"])
-    #             new_credentials.password = hashed_password
-    #             new_credentials.save()
-    #             sweetify.success(
-    #                 request,
-    #                 "Your credentials have been updated, please login."
-    #             )
-    #             return redirect("login")
-    #     else:
-    #         form = UserCredentialsUpdateForm(instance=user)
-    #         return JsonResponse({"success": True}, status=200)
-    #     return JsonResponse({"success": False, "errors": form.errors}, status=400)
-    #
-

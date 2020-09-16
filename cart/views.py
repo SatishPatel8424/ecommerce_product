@@ -1,6 +1,6 @@
 import json
 from django.shortcuts import render, redirect, reverse
-from django.http import JsonResponse
+from django.http import JsonResponse, HttpResponseRedirect
 import sweetify
 from django.views import generic
 
@@ -17,16 +17,16 @@ def empty_cart_modal(request):
     return request
 
 
-class cart_view(generic.ListView,generic.FormView):
+class cart_view(generic.TemplateView):
     template_name = 'cart.html'
     context_object_name = 'cart_items'
+
 
     def get(self, request, *args, **kwargs):
         if not request.session.get("cart"):
             empty_cart_modal(request)
             return redirect(reverse("products"))
         return render(self.request, self.template_name)
-
 
     def post(self, request, *args, **kwargs):
         if request.method == "POST":
@@ -43,6 +43,8 @@ class cart_view(generic.ListView,generic.FormView):
                 request.session["cart"] = cart
             return JsonResponse({"success": True}, status=200)
         return JsonResponse({"success": False, }, status=400)
+
+
 
 def add_to_cart(request, id):
     """Adds the required quantity of a product to session variable."""
