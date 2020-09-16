@@ -48,52 +48,50 @@ class checkout_payment(LoginRequiredMixin,generic.FormView):
 
 
     def form_valid(self, form):
-        if self.request.method == "POST":
-            # payment_form = PaymentForm(request.POST)
-            form = self.form_class(self.request.POST)
-            if form.is_valid():
-                cart = self.request.session.get("cart", {})
-                cart_total = cart_contents(self.request)["total"]
-                try:
-                    stripe.Charge.create(
-                        amount=int(cart_total * 100),
-                        currency="GBP",
-                        description=self.request.user.email,
-                        card=form.cleaned_data["stripe_id"]
-                    )
-                except stripe.error.CardError:
-                    sweetify.error(
-                        self.request,
-                        title="Payment error occurred, please retry with valid credentials.",
-                        text="If error persists, contact site owner.",
-                        icon="error"
-                    )
-                except stripe.error.InvalidRequestError:
-                    sweetify.error(
-                        self.request,
-                        title="A payment error has occurred.",
-                        text="An item may have gone out of stock during checkout.",
-                        icon="error"
-                    )
-                    return redirect("profile")
-                except stripe.error.APIConnectionError:
-                    sweetify.error(
-                        self.request,
-                        title="A payment error has occurred.",
-                        text="Connection to payment handler has failed, please retry later.",
-                        icon="error"
-                    )
-                    return redirect("profile")
-                else:
-                    sweetify.success(
-                        self.request,
-                        title="Payment successful, thank you for your purchase.",
-                        icon="success"
-                    )
-                    create_order_product_records(self.request, cart)
-                    del self.request.session["cart"]
-                    return redirect(reverse("profile"))
-                return JsonResponse({"success": True}, status=200)
+        form = self.form_class(self.request.POST)
+        cart = self.request.session.get("cart", {})
+        cart_total = cart_contents(self.request)["total"]
+        try:
+            stripe.Charge.create(
+                amount=int(cart_total * 100),
+                currency="GBP",
+                description=self.request.user.email,
+                card=form.cleaned_data["stripe_id"]
+            )
+        except stripe.error.CardError:
+            sweetify.error(
+                self.request,
+                title="Payment error occurred, please retry with valid credentials.",
+                text="If error persists, contact site owner.",
+                icon="error"
+            )
+        except stripe.error.InvalidRequestError:
+            sweetify.error(
+                self.request,
+                title="A payment error has occurred.",
+                text="An item may have gone out of stock during checkout.",
+                icon="error"
+            )
+            return redirect("profile")
+        except stripe.error.APIConnectionError:
+            sweetify.error(
+                self.request,
+                title="A payment error has occurred.",
+                text="Connection to payment handler has failed, please retry later.",
+                icon="error"
+            )
+            return redirect("profile")
+        else:
+            sweetify.success(
+                self.request,
+                title="Payment successful, thank you for your purchase.",
+                icon="success"
+            )
+            create_order_product_records(self.request, cart)
+            del self.request.session["cart"]
+            return redirect(reverse("profile"))
+        return JsonResponse({"success": True}, status=200)
+
 
 
     def form_invalid(self, form):
