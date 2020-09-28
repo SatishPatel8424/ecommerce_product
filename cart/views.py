@@ -43,11 +43,6 @@ class cart_view(generic.TemplateView):
             return JsonResponse({"success": True}, status=200)
         return JsonResponse({"success": False, }, status=400)
 
-
-
-
-
-
 def add_to_cart(request, id):
     """Adds the required quantity of a product to session variable."""
     quantity = int(request.POST.get("quantity"))
