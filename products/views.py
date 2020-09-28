@@ -1,54 +1,40 @@
-from django.shortcuts import render
+from django.shortcuts import render, get_object_or_404
 from django.db.models import Q
 from django.core.paginator import Paginator
+from django.views import generic
+from django.views.generic.base import View
 from .models import Product
 
+class products_view(generic.ListView):
+    model = Product
+    template_name = 'productslist.html'
+    context_object_name = 'product'
+    paginate_by = 15
 
-def paginator_setup(request, products):
-    """Creates paginator, tracks current page and how many objects per page."""
-    paginator = Paginator(products, 15)
-    page_object = paginator.get_page(request.GET.get("page"))
-    return page_object
+    def get_paginate_by(self, queryset):
+        queryset = Product.objects.filter(active_product=True)
+
+class product_detail_view(generic.DetailView):
+    model = Product
+    template_name = "productdetail.html"
+    context_object_name = 'product'
+
+class product_search(generic.ListView):
+    model = Product
+    template_name = 'productslist.html'
+    context_object_name = 'product'
+
+    def get_queryset(self):  # new
+        # query = self.request.GET.get('q')
+        search_query = self.request.GET.get("search_query")
+        search_query_list = search_query.split(" ")
+        q_object = Q(name__icontains=search_query_list[0]) | Q(
+            description__icontains=search_query_list[0])
+        for term in search_query_list:
+            q_object.add((Q(name__icontains=term) | Q(
+                description__icontains=term)), q_object.connector)
+        products = Product.objects.filter(q_object, active_product=True)
+
+        return products
 
 
-def products_view(request):
-    """Displays all store-active products with pagination."""
-    products = Product.objects.filter(active_product=True)
-    paginator_info = paginator_setup(request, products)
-    return render(request, "productslist.html", {
-        "products": products,
-        "page_title": "Products | PrintCrate",
-        "page_object": paginator_info
-    })
-
-
-def product_detail_view(request, primary_key):
-    """Displays detailed product view."""
-    previous_page = request.META.get("HTTP_REFERER")
-    if previous_page is None:
-        previous_page = "/products"
-    product = Product.objects.get(pk=primary_key)
-    return render(request, "productdetail.html", {
-        "product": product,
-        "page_title": f"{product.name} | PrintCrate",
-        "previous_page": previous_page
-    })
-
-
-def product_search(request):
-    """Searches for products containing search terms in name or description."""
-    search_query = request.GET.get("search_query")
-    search_query_list = search_query.split(" ")
-    q_object = Q(name__icontains=search_query_list[0]) | Q(
-        description__icontains=search_query_list[0])
-    for term in search_query_list:
-        q_object.add((Q(name__icontains=term) | Q(
-            description__icontains=term)), q_object.connector)
-    products = Product.objects.filter(q_object, active_product=True)
-    paginator_info = paginator_setup(request, products)
-    return render(request, "productslist.html", {
-        "products": products,
-        "page_title": "Products | PrintCrate",
-        "search_query": search_query,
-        "page_object": paginator_info
-    })

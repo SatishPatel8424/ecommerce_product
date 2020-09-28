@@ -7,7 +7,7 @@
     <!-- Loads CSRF token for form submission. -->
     {% csrf_token %}
     <!-- Displays contact form for user to input their message to site owner. -->
-    {{ contact_form|crispy }}
+    {{ form|crispy }}
     <div class="form-actions d-flex justify-content-center">
       <button type="submit" class="btn btn-custom mb-2">Send</button>
     </div>

@@ -11,14 +11,14 @@
     </form>
   </div>
   <!-- Feedback to remind user what their search terms were. -->
-  {% if search_query %}
+  {% if product %}
   <div class="row">
-    <p class="col-12 col-md-6 offset-md-5 text-center mt-1">Search results for: <span id="search-query">{{ search_query }}</span></p>
+{#    <p class="col-12 col-md-6 offset-md-5 text-center mt-1">Search results for: <span id="search-query">{{ product }}</span></p>#}
   </div>
   {% endif %}
-  {% if products %}
+  {% if product %}
   <div class="row d-flex flex-wrap">
-    {% for product in page_object %}
+    {% for product in object_list %}
     <div class="col-12 col-md-6 col-lg-4 my-3">
       {% include "productcard.html" %}
     </div>
