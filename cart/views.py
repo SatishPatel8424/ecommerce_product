@@ -4,6 +4,7 @@ from django.http import JsonResponse, HttpResponseRedirect
 import sweetify
 from django.views import generic
 
+# cart empty method check
 def empty_cart_modal(request):
     """Modal shown when cart page accessed with empty cart."""
     sweetify.error(
@@ -16,7 +17,7 @@ def empty_cart_modal(request):
     )
     return request
 
-
+# cart view
 class cart_view(generic.TemplateView):
     template_name = 'cart.html'
     context_object_name = 'cart_items'
@@ -43,6 +44,7 @@ class cart_view(generic.TemplateView):
             return JsonResponse({"success": True}, status=200)
         return JsonResponse({"success": False, }, status=400)
 
+# add cart method
 def add_to_cart(request, id):
     """Adds the required quantity of a product to session variable."""
     quantity = int(request.POST.get("quantity"))
@@ -55,6 +57,7 @@ def add_to_cart(request, id):
     request.session["cart"] = cart
     return redirect(reverse("cart_view"))
 
+# adjust cart method
 def adjust_cart(request, id):
     """Alters existing product quantity, removes if quantity less than 1."""
     quantity = int(request.POST.get("quantity"))
@@ -66,7 +69,7 @@ def adjust_cart(request, id):
     request.session["cart"] = cart
     return redirect(reverse("cart_view"))
 
-
+# cart validation check method
 def validate_item_quantity_change(request, custom_fetch_request):
     item_id = custom_fetch_request["itemId"]
     cart = request.session["cart"]

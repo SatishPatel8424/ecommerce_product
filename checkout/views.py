@@ -15,8 +15,9 @@ import stripe
 
 stripe.api_key = settings.STRIPE_SECRET
 # decorators = [login_required]
-
 # @method_decorator(login_required, name='dispatch')
+
+# checkout shipping address view
 class checkout_shipping_address_view(LoginRequiredMixin,generic.FormView):
     form_class = CustomerShippingForm
     template_name = 'checkout_shipping_address.html'
@@ -41,6 +42,7 @@ class checkout_shipping_address_view(LoginRequiredMixin,generic.FormView):
 
 
 
+# checkout payment view
 # @method_decorator(login_required, name='dispatch')
 class checkout_payment(LoginRequiredMixin,generic.FormView):
     form_class = PaymentForm
@@ -98,6 +100,7 @@ class checkout_payment(LoginRequiredMixin,generic.FormView):
         form = self.form_class()
         return JsonResponse({"success": False, "errors": form.errors}, status=400)
 
+# create order product records fetch view
 def create_order_product_records(request, cart):
     """Creates the product order record in the database.
 

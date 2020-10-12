@@ -5,6 +5,7 @@ from django.views import generic
 from django.views.generic.base import View
 from .models import Product
 
+# product view
 class products_view(generic.ListView):
     model = Product
     template_name = 'productslist.html'
@@ -14,11 +15,13 @@ class products_view(generic.ListView):
     def get_paginate_by(self, queryset):
         queryset = Product.objects.filter(active_product=True)
 
+# product detail view
 class product_detail_view(generic.DetailView):
     model = Product
     template_name = "productdetail.html"
     context_object_name = 'product'
 
+# product search view
 class product_search(generic.ListView):
     model = Product
     template_name = 'productslist.html'

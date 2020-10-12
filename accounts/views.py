@@ -14,6 +14,7 @@ from .forms import UserRegisterForm, UserCredentialsUpdateForm
 
 # decorators = [login_required]
 
+# logout view
 @login_required
 def logout(request):
     """Log the user out."""
@@ -25,6 +26,7 @@ def logout(request):
     )
     return redirect(reverse("home"))
 
+# registration view
 class registration(generic.FormView):
     form_class = UserRegisterForm
     template_name = 'register.html'
@@ -76,7 +78,7 @@ class registration(generic.FormView):
             return redirect("profile")
         return HttpResponseRedirect(self.get_success_url())
 
-
+# profile view
 # @method_decorator(login_required, name='dispatch')
 class profile(LoginRequiredMixin,generic.FormView):
     form_class = UserCredentialsUpdateForm

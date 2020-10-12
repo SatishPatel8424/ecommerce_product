@@ -5,7 +5,7 @@ from django.shortcuts import render, redirect
 from django.views import generic
 from .forms import ContactForm
 
-
+# contact us view
 class contact_us(generic.FormView):
     form_class = ContactForm
     template_name = "contact.html"
@@ -38,5 +38,6 @@ class contact_us(generic.FormView):
             return HttpResponse("Invalid header found.")
         return super().form_valid(subject)
 
+# contact success view
 class contact_success(generic.TemplateView):
     template_name = 'contact_success.html'

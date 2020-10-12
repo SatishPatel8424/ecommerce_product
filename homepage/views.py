@@ -4,11 +4,11 @@ from django.views import generic
 
 from products.models import Product
 
+# home view
 class home(generic.ListView):
     model = Product
     template_name = 'home.html'
     context_object_name = 'products'
-
 
     def get_queryset(self):
         showcase_products = Product.objects.filter(
